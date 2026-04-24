@@ -5,44 +5,49 @@ import org.openqa.selenium.chrome.ChromeDriver;
 
 import java.util.concurrent.TimeUnit;
 
-
 public class GoogleAcc {
 
-    @Test
-    public void gmailEnter() throws InterruptedException {
+    private static final String BASE_URL = "https://accounts.google.com/";
+
+    private WebDriver setupDriver() {
         System.setProperty("webdriver.chrome.driver", "D:\\Programing\\QA\\chromedriver.exe");
         WebDriver driver = new ChromeDriver();
         driver.manage().timeouts().implicitlyWait(30, TimeUnit.SECONDS);
-        driver.get("https://accounts.google.com/");
+        driver.get(BASE_URL);
+        return driver;
+    }
 
-        driver.findElement(By.id("identifierId")).sendKeys("iryna1yeremenko");
-        driver.findElement(By.id("identifierNext")).click();
+    private String[] getCredentials() {
+        String username = System.getenv("GMAIL_USERNAME");
+        String password = System.getenv("GMAIL_PASSWORD");
 
-        Thread.sleep(2000);
+        if (username == null || password == null) {
+            throw new RuntimeException("Credentials are not set in environment variables");
+        }
 
-        driver.findElement(By.name("password")).sendKeys("Qwerty12345!");
-        driver.findElement(By.id("passwordNext")).click();
-
-        //webDriver.quit(); закомментировано чтобы окно не закрывалось сразу после теста,
-        // чтобы можно было увидеть на самом ли деле пользователь залогинился
+        return new String[]{username, password};
     }
 
     @Test
-    public void gmailNoEnter() throws InterruptedException {
-        System.setProperty("webdriver.chrome.driver", "D:\\Programing\\QA\\chromedriver.exe");
-        WebDriver webDriver = new ChromeDriver();
-        webDriver.manage().timeouts().implicitlyWait(30, TimeUnit.SECONDS);
-        webDriver.get("https://accounts.google.com/");
+    public void gmailValidLogin() throws InterruptedException {
+        WebDriver driver = setupDriver();
+        String[] credentials = getCredentials();
 
-        webDriver.findElement(By.id("identifierId")).sendKeys("faq.yeahh");
-        webDriver.findElement(By.id("identifierNext")).click();
-
+        driver.findElement(By.id("identifierId")).sendKeys(credentials[0]);
         Thread.sleep(2000);
+        driver.findElement(By.name("password")).sendKeys(credentials[1]);
 
-        webDriver.findElement(By.name("password")).sendKeys("Qwerty12345");
-        webDriver.findElement(By.id("passwordNext")).click();
+        driver.quit();
+    }
 
-        //webDriver.quit(); закомментировано чтобы окно не закрывалось сразу после теста,
-        // чтобы можно было увидеть на самом ли деле пользователь не залогинился
+    @Test
+    public void gmailInvalidLogin() throws InterruptedException {
+        WebDriver driver = setupDriver();
+
+        driver.findElement(By.id("identifierId")).sendKeys("invalid_user");
+        Thread.sleep(2000);
+        driver.findElement(By.name("password")).sendKeys("invalid_password");
+
+        driver.quit();
     }
 }
